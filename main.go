@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/nlopes/slack"
@@ -20,15 +22,17 @@ func run(api *slack.Client) int {
 		case msg := <-rtm.IncomingEvents:
 			switch ev := msg.Data.(type) {
 			case *slack.MessageEvent:
-				text := ev.Text
 
 				ree := re.Copy()
-				if !ree.MatchString(text) {
+				if !ree.MatchString(ev.Text) {
 					continue
 				}
 
+				src := strings.Replace(ev.Text, "hey gopher", "", 1)
+				src = strings.Replace(src, "```", "", 2)
+
 				var cli goplayground.Client
-				r, err := cli.Run(text)
+				r, err := cli.Run(src)
 				if err != nil {
 					continue
 				}
@@ -45,6 +49,11 @@ func run(api *slack.Client) int {
 			}
 		}
 	}
+}
+
+func sendMessage(rtm *slack.RTM, text string, channelID string, options ...slack.RTMsgOption) {
+	s := fmt.Sprintf("```%s```", text)
+	rtm.SendMessage(rtm.NewOutgoingMessage(s, channelID, options...))
 }
 
 func main() {
