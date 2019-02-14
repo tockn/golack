@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"os"
 	"regexp"
 	"time"
@@ -49,12 +48,12 @@ func run(api *slack.Client) int {
 }
 
 func main() {
-	var (
-		token string
-	)
 
-	flag.StringVar(&token, "token", "YOUR_API_TOKEN_HERE", "Your Slack Bot API Token")
-	flag.Parse()
+	token := os.Getenv("TOKEN")
+
+	if token == "" {
+		os.Exit(0)
+	}
 
 	api := slack.New(token)
 	os.Exit(run(api))
