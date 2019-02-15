@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"html"
+	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -11,7 +13,7 @@ import (
 	"github.com/tenntenn/goplayground"
 )
 
-var(
+var (
 	re *regexp.Regexp
 )
 
@@ -46,7 +48,7 @@ func run(api *slack.Client) int {
 					continue
 				}
 
-				src := retrieveSourceCode(ev.Text)
+				src := html.UnescapeString(retrieveSourceCode(ev.Text))
 
 				var cli goplayground.Client
 				r, err := cli.Run(src)
@@ -68,7 +70,7 @@ func run(api *slack.Client) int {
 	}
 }
 
-func retrieveSourceCode(s string) string{
+func retrieveSourceCode(s string) string {
 	s = strings.Replace(s, "hey gopher", "", 1)
 	s = strings.Replace(s, "```", "", 2)
 	return s
@@ -78,4 +80,3 @@ func sendMessage(rtm *slack.RTM, text string, channelID string, options ...slack
 	s := fmt.Sprintf("```%s```", text)
 	rtm.SendMessage(rtm.NewOutgoingMessage(s, channelID, options...))
 }
-
