@@ -11,7 +11,25 @@ import (
 	"github.com/tenntenn/goplayground"
 )
 
-var re = regexp.MustCompile("^hey gopher\n```[A-Za-z]*\n([\\s\\S]*?\n)```")
+var(
+	re *regexp.Regexp
+)
+
+func init() {
+	re = regexp.MustCompile("^hey gopher\n```[A-Za-z]*\n([\\s\\S]*?\n)```")
+}
+
+func main() {
+
+	token := os.Getenv("TOKEN")
+
+	if token == "" {
+		os.Exit(0)
+	}
+
+	api := slack.New(token)
+	os.Exit(run(api))
+}
 
 func run(api *slack.Client) int {
 	rtm := api.NewRTM()
@@ -28,8 +46,7 @@ func run(api *slack.Client) int {
 					continue
 				}
 
-				src := strings.Replace(ev.Text, "hey gopher", "", 1)
-				src = strings.Replace(src, "```", "", 2)
+				src := retrieveSourceCode(ev.Text)
 
 				var cli goplayground.Client
 				r, err := cli.Run(src)
@@ -51,19 +68,14 @@ func run(api *slack.Client) int {
 	}
 }
 
+func retrieveSourceCode(s string) string{
+	s = strings.Replace(s, "hey gopher", "", 1)
+	s = strings.Replace(s, "```", "", 2)
+	return s
+}
+
 func sendMessage(rtm *slack.RTM, text string, channelID string, options ...slack.RTMsgOption) {
 	s := fmt.Sprintf("```%s```", text)
 	rtm.SendMessage(rtm.NewOutgoingMessage(s, channelID, options...))
 }
 
-func main() {
-
-	token := os.Getenv("TOKEN")
-
-	if token == "" {
-		os.Exit(0)
-	}
-
-	api := slack.New(token)
-	os.Exit(run(api))
-}
